@@ -8,6 +8,7 @@ This is vandan.
 """
 
 from tkinter import *
+from tkinter.ttk import *
 import mysql.connector as sql
 
 mydb=sql.connect(host="localhost",user="root",passwd="1609",db="Medstore")
@@ -20,10 +21,11 @@ def click_login(uid,passwd,caller,wrong_c):
     output=cursor.fetchall()
     if cursor.rowcount==1:
         epassw=output[0][0]
-        mydb.close()
         if epassw==passwd:
+            cursor.execute(f"select post from staff where username='{uid}'")
+            post=(cursor.fetchall())[0][0]
             caller.destroy()
-            MainMenu()   
+            MainMenu(post)   
         else:
             wrong_c.grid(row=0,column=2)
     else:
@@ -42,11 +44,11 @@ def LoginPage():
     Entry(login, textvariable=username,width=50).grid(row=0,column=1)
     Entry(login, textvariable=passwd,width=50,show='*').grid(row=1,column=1)
     Button(fm1, text="LOG IN", command=lambda: click_login(username.get(),passwd.get(),login,wrong_c)).grid(row=0,column=0,sticky=W)
-    Button(fm1, text="SIGN UP", command=lambda: signup(login)).grid(row=0,column=1)
+    Button(fm1, text="SIGN UP", command=lambda: SignUp(login)).grid(row=0,column=1)
     login.mainloop()
 
 #%%
-def MainMenu():
+def MainMenu(post):
     mnmnu=Tk()
     mnmnu.title("Main Menu")
     fr1=Frame(mnmnu)
@@ -94,7 +96,6 @@ def SignUp(caller):
     gen.grid(row=8,column=1,sticky=W)  
     r1=Radiobutton(gen,text="Prefer not to specify",variable=gender,value="null")
     r1.grid(row=0,column=0,columnspan=2,sticky=W)
-    r1.select()
     Radiobutton(gen,text="Male",variable=gender,value="'M'").grid(row=1,column=0,sticky=W)
     Radiobutton(gen,text="Female",variable=gender,value="'F'").grid(row=1,column=1,sticky=W)
     Radiobutton(gen,text="Others",variable=gender,value="'O'").grid(row=1,column=2,sticky=W)
@@ -152,7 +153,7 @@ def stock(caller):
     caller.destroy()
     inventory=Tk()
     additems=Frame(inventory)
-    additems.grid(row=1,column=0,columnspan=3)
+    additems.grid(row=1,column=0,columnspan=3,sticky=W)
     Label(inventory,text="Add to stock:-\n").grid(row=0,column=0,sticky=W)
     Label(additems,text="Seriel no.*:").grid(row=0,column=0,sticky=W)
     Label(additems,text="Batch code*:").grid(row=0,column=2,sticky=W)
@@ -167,7 +168,7 @@ def stock(caller):
     e1=Entry(additems,textvariable=seriel,width=20)
     e1.grid(row=0,column=1,sticky=W)
     e2=Entry(additems,textvariable=batchcode,width=20)
-    e2.grid(row=0,column=3)
+    e2.grid(row=0,column=3,columnspan=3,sticky=W)
     e3=Entry(additems,textvariable=manu,width=30)
     e3.grid(row=1,column=1,sticky=W)
     e4=Entry(additems,textvariable=supp,width=30)
@@ -181,7 +182,7 @@ def stock(caller):
     e8=Entry(additems,textvariable=exp,width=20)
     e8.grid(row=3,column=1,sticky=W)
     entries=[e1,e2,e3,e4,e5,e6,e7,e8]
-    Button(inventory,text="Add entry",command=lambda: click_entry("new",inventory,entries,
+    Button(inventory,text="Add entry",command=lambda: click_entry("new",inventory,entries,tree,
                                                                   seriel.get(),
                                                                   manu.get(),
                                                                   supp.get(),
@@ -190,9 +191,39 @@ def stock(caller):
                                                                   rate.get(),
                                                                   exp.get(),
                                                                   batchcode.get())).grid(row=3,column=0,sticky=W)
+    
+    tree=Treeview(inventory)
+    tree["columns"]=(0,1,2,3,4,5,6,7)
+    tree.column("#0",width=0)
+    tree.column(0,width=100)
+    tree.column(1,width=100)
+    tree.column(2,width=100)
+    tree.column(3,width=100)
+    tree.column(4,width=50)
+    tree.column(5,width=50)
+    tree.column(6,width=100)
+    tree.column(7,width=130)
+    tree.heading(0,text="Seriel number")
+    tree.heading(1,text="Supplier")
+    tree.heading(2,text="Manufacturer")
+    tree.heading(3,text="Product")
+    tree.heading(4,text="Qty.")
+    tree.heading(5,text="Rate")
+    tree.heading(6,text="Expiry")
+    tree.heading(7,text="batchcode")
+    tree.grid(row=4,column=0)
+    vsb=Scrollbar(inventory,orient="vertical",command=tree.yview)
+    tree.configure(yscrollcommand=vsb.set)
+    vsb.grid(row=4,column=1,sticky=NS)
+    mydb.connect()
+    cursor.execute("select * from stock order by Itemname asc, expiry desc")
+    for i in cursor.fetchall():
+        for j in range(5):
+            tree.insert('',"end",values=(i))
+    mydb.close()
     inventory.mainloop()
     
-def click_entry(mode,caller,entries,serielno,manufacturer,supplier,itemname,qty,rate,expiry,batchcode):
+def click_entry(mode,caller,entries,tree,serielno,manufacturer,supplier,itemname,qty,rate,expiry,batchcode):
     error=Frame(caller)
     error.grid(row=3,column=1,sticky=W,ipadx=60)
     if serielno=='':
@@ -214,6 +245,11 @@ def click_entry(mode,caller,entries,serielno,manufacturer,supplier,itemname,qty,
         mydb.commit()
         for i in entries:
             i.delete(0,100)
+        cursor.execute("select * from stock order by Itemname asc, expiry desc")
+        for i in tree.get_children():
+            tree.delete(i)
+        for i in cursor.fetchall():
+            tree.insert('',"end",values=(i))
         mydb.close()
 #%%
 LoginPage()
