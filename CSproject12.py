@@ -10,6 +10,7 @@ This is vandan.
 from tkinter import *
 from tkinter.ttk import *
 import mysql.connector as sql
+import datetime
 
 mydb=sql.connect(host="localhost",user="root",passwd="1609",db="Medstore")
 cursor=mydb.cursor()
@@ -252,10 +253,10 @@ def employee(caller):
     emp=Tk()
     fr1=Frame(emp)
     fr1.grid(row=0,column=0,columnspan=2)
-    Button(fr1,text="Add new employee",width=48).grid(row=0,column=0)
+    tree=Treeview(emp)
+    Button(fr1,text="Add new employee",width=48,command=lambda: add_emp(emp,tree)).grid(row=0,column=0)
     Button(fr1,text="Update an employee",width=48).grid(row=0,column=1)
     Button(fr1,text="Remove an employee",width=48).grid(row=0,column=2)
-    tree=Treeview(emp)
     tree["columns"]=(0,1,2,3,4,5,6,7,8,9)
     tree.column("#0",width=0)
     tree.column(0,width=50)
@@ -289,5 +290,36 @@ def employee(caller):
     mydb.close()
     emp.mainloop()
     
+def add_emp(emp,tree):
+    mydb.connect()
+    cursor.execute("select max(eid),max(date_employed),max(ipass) from staff")
+    op=cursor.fetchall()
+    today=str(datetime.date.today())
+    date_employed=today
+    if cursor.rowcount==0:
+        eid='E001'
+        ipass='#'+today[2:4]+today[5:7]+today[8:]+'01#'
+    else:
+        maxeid=op[0][0] #The last eid in the table
+        maxde=str(op[0][1]) #The last date_employed in the table
+        maxpass=op[0][2] #The last ipass in the table
+        eid="E"+str(int(maxeid[1:])+1)
+        while len(eid)<4:
+            eid=eid[0]+'0'+eid[1:]
+        if maxde==today:
+            ipassnum=str(int(maxpass[7:9])+1) 
+            ipassnum='0'+ipassnum if len(ipassnum)==1 else ipassnum
+        else:
+            ipassnum='01'
+        ipass='#'+today[2:4]+today[5:7]+today[8:]+ipassnum+'#'
+    cursor.execute(f"insert into staff(eid,ipass,date_employed) values('{eid}','{ipass}','{date_employed}')")
+    mydb.commit()
+    cursor.execute("select eid,name,username,post,mobile,sal,gender,dob,ipass,date_employed from staff")
+    for i in tree.get_children():
+        tree.delete(i)
+    for i in cursor.fetchall():
+        tree.insert('',"end",values=(i))
+    mydb.close()    
+        
 #%%        
 LoginPage()
