@@ -253,9 +253,11 @@ def employee(caller):
     emp=Tk()
     fr1=Frame(emp)
     fr1.grid(row=0,column=0,columnspan=2)
+    options=Frame(emp)
+    options.grid(row=2,column=0,sticky=W)
     tree=Treeview(emp)
-    Button(fr1,text="Add new employee",width=48,command=lambda: add_emp(emp,tree)).grid(row=0,column=0)
-    Button(fr1,text="Update an employee",width=48).grid(row=0,column=1)
+    Button(fr1,text="Add new employee",width=48,command=lambda: add_emp(tree,options)).grid(row=0,column=0)
+    Button(fr1,text="Update an employee",width=48,command=lambda: update_employee(tree,options)).grid(row=0,column=1)
     Button(fr1,text="Remove an employee",width=48).grid(row=0,column=2)
     tree["columns"]=(0,1,2,3,4,5,6,7,8,9)
     tree.column("#0",width=0)
@@ -290,7 +292,17 @@ def employee(caller):
     mydb.close()
     emp.mainloop()
     
-def add_emp(emp,tree):
+def add_emp(tree,fr1):
+    for widget in fr1.winfo_children():
+        widget.destroy()
+    post,sal=StringVar(),StringVar()
+    Label(fr1,text="Add post: ").grid(row=0,column=0)
+    Entry(fr1,textvariable=post).grid(row=0,column=1)
+    Label(fr1,text="Add salary: ").grid(row=0,column=2)
+    Entry(fr1,textvariable=sal).grid(row=0,column=4)
+    Button(fr1,text="ADD",command=lambda: click_add_emp(tree,post.get(),sal.get())).grid(row=0,column=5)
+
+def click_add_emp(tree,post,sal):
     mydb.connect()
     cursor.execute("select max(eid),max(date_employed),max(ipass) from staff")
     op=cursor.fetchall()
@@ -312,7 +324,7 @@ def add_emp(emp,tree):
         else:
             ipassnum='01'
         ipass='#'+today[2:4]+today[5:7]+today[8:]+ipassnum+'#'
-    cursor.execute(f"insert into staff(eid,ipass,date_employed) values('{eid}','{ipass}','{date_employed}')")
+    cursor.execute(f"insert into staff(eid,ipass,date_employed,post,sal) values('{eid}','{ipass}','{date_employed}','{post}',{sal})")
     mydb.commit()
     cursor.execute("select eid,name,username,post,mobile,sal,gender,dob,ipass,date_employed from staff")
     for i in tree.get_children():
@@ -321,5 +333,11 @@ def add_emp(emp,tree):
         tree.insert('',"end",values=(i))
     mydb.close()    
         
+def update_employee(tree,fr1):
+    for widget in fr1.winfo_children():
+        widget.destroy()
+    Label(fr1,text="The button is working fine.").grid(row=0,column=0) #Test line
+    Label(fr1,text="Yep, it is.").grid(row=0,column=1) #Test line
+    
 #%%        
 LoginPage()
