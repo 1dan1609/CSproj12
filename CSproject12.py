@@ -258,7 +258,7 @@ def employee(caller):
     tree=Treeview(emp)
     Button(fr1,text="Add new employee",width=48,command=lambda: add_emp(tree,options)).grid(row=0,column=0)
     Button(fr1,text="Update an employee",width=48,command=lambda: update_employee(tree,options)).grid(row=0,column=1)
-    Button(fr1,text="Remove an employee",width=48).grid(row=0,column=2)
+    Button(fr1,text="Remove an employee",width=48, command=lambda: remove(tree,options)).grid(row=0,column=2)
     tree["columns"]=(0,1,2,3,4,5,6,7,8,9)
     tree.column("#0",width=0)
     tree.column(0,width=50)
@@ -339,5 +339,28 @@ def update_employee(tree,fr1):
     Label(fr1,text="The button is working fine.").grid(row=0,column=0) #Test line
     Label(fr1,text="Yep, it is.").grid(row=0,column=1) #Test line
     
+def remove(tree,fr1):
+    for widget in fr1.winfo_children():
+        widget.destroy()
+    Label(fr1,text="Enter ID of employee to remove: ").grid(row=0,column=0)
+    eid=StringVar()
+    Entry(fr1,textvariable=eid).grid(row=0,column=1)
+    error=Label(fr1,text="Please enter a valid ID.")
+    Button(fr1,text="REMOVE",command=lambda: click_remove(tree,fr1,eid.get(),error)).grid(row=0,column=2)
+    
+def click_remove(tree,fr1,eid,error):
+    mydb.connect()
+    cursor.execute(f"delete from staff where eid='{eid}'")
+    mydb.commit()
+    if cursor.rowcount==0:
+        error.grid(row=0,column=4)
+    else:
+        error.grid_forget()
+        cursor.execute("select eid,name,username,post,mobile,sal,gender,dob,ipass,date_employed from staff")
+        for i in tree.get_children():
+            tree.delete(i)
+        for i in cursor.fetchall():
+            tree.insert('',"end",values=(i))
+    mydb.close()   
 #%%        
 LoginPage()
