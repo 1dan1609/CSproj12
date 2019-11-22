@@ -54,7 +54,7 @@ def MainMenu(post):
     mnmnu.title("Main Menu")
     fr1=Frame(mnmnu)
     fr1.grid(row=0,column=0)
-    Button(fr1,text="Billing",width=25).grid(row=0,column=0)
+    Button(fr1,text="Billing",width=25,command=lambda: billing(mnmnu)).grid(row=0,column=0)
     Button(fr1,text="Stock",command=lambda: stock(mnmnu),width=25).grid(row=0,column=1)
     Button(fr1,text="Customers",width=25).grid(row=1,column=0)
     Button(fr1,text="History",width=25).grid(row=1,column=1)
@@ -91,8 +91,7 @@ def SignUp(caller):
     Entry(newacc, textvariable=dob, width=25).grid(row=7,column=1,sticky=W)
     gen=Frame(newacc)
     gen.grid(row=8,column=1,sticky=W)  
-    r1=Radiobutton(gen,text="Prefer not to specify",variable=gender,value="null")
-    r1.grid(row=0,column=0,columnspan=2,sticky=W)
+    Radiobutton(gen,text="Prefer not to specify",variable=gender,value="null").grid(row=0,column=0,columnspan=2,sticky=W)
     Radiobutton(gen,text="Male",variable=gender,value="'M'").grid(row=1,column=0,sticky=W)
     Radiobutton(gen,text="Female",variable=gender,value="'F'").grid(row=1,column=1,sticky=W)
     Radiobutton(gen,text="Others",variable=gender,value="'O'").grid(row=1,column=2,sticky=W)
@@ -324,7 +323,9 @@ def click_add_emp(tree,post,sal):
         else:
             ipassnum='01'
         ipass='#'+today[2:4]+today[5:7]+today[8:]+ipassnum+'#'
-    cursor.execute(f"insert into staff(eid,ipass,date_employed,post,sal) values('{eid}','{ipass}','{date_employed}','{post}',{sal})")
+    post='null' if post=='' else "'"+post+"'"
+    sal='null' if sal=='' else sal
+    cursor.execute(f"insert into staff(eid,ipass,date_employed,post,sal) values('{eid}','{ipass}','{date_employed}',{post},{sal})")
     mydb.commit()
     cursor.execute("select eid,name,username,post,mobile,sal,gender,dob,ipass,date_employed from staff")
     for i in tree.get_children():
@@ -332,12 +333,6 @@ def click_add_emp(tree,post,sal):
     for i in cursor.fetchall():
         tree.insert('',"end",values=(i))
     mydb.close()    
-        
-def update_employee(tree,fr1):
-    for widget in fr1.winfo_children():
-        widget.destroy()
-    Label(fr1,text="The button is working fine.").grid(row=0,column=0) #Test line
-    Label(fr1,text="Yep, it is.").grid(row=0,column=1) #Test line
     
 def remove(tree,fr1):
     for widget in fr1.winfo_children():
@@ -346,9 +341,9 @@ def remove(tree,fr1):
     eid=StringVar()
     Entry(fr1,textvariable=eid).grid(row=0,column=1)
     error=Label(fr1,text="Please enter a valid ID.")
-    Button(fr1,text="REMOVE",command=lambda: click_remove(tree,fr1,eid.get(),error)).grid(row=0,column=2)
+    Button(fr1,text="REMOVE",command=lambda: click_remove(tree,eid.get(),error)).grid(row=0,column=2)
     
-def click_remove(tree,fr1,eid,error):
+def click_remove(tree,eid,error):
     mydb.connect()
     cursor.execute(f"delete from staff where eid='{eid}'")
     mydb.commit()
@@ -361,6 +356,93 @@ def click_remove(tree,fr1,eid,error):
             tree.delete(i)
         for i in cursor.fetchall():
             tree.insert('',"end",values=(i))
-    mydb.close()   
+    mydb.close()
+    
+def update_employee(tree,fr1):
+    for widget in fr1.winfo_children():
+        widget.destroy()
+    eid,new_post,new_sal=StringVar(),StringVar(),StringVar()
+    error=Label(fr1,text="Enter a valid ID.")
+    Label(fr1,text="Add Employee ID: ").grid(row=0,column=0)
+    Entry(fr1,textvariable=eid).grid(row=0,column=1)
+    Label(fr1,text="Add new post: ").grid(row=0,column=2)
+    Entry(fr1,textvariable=new_post).grid(row=0,column=3)
+    Label(fr1,text="Add new salary: ").grid(row=0,column=4)
+    Entry(fr1,textvariable=new_sal).grid(row=0,column=5)
+    Button(fr1,text="UPDATE",command=lambda: click_upd_emp(tree,error,eid.get(),new_post.get(),new_sal.get())).grid(row=0,column=6)
+
+def click_upd_emp(tree,error,eid,new_post,new_sal):
+    mydb.connect()
+    cursor.execute(f"select post,sal from staff where eid='{eid}'")
+    op=list(cursor.fetchall()[0])
+    if cursor.rowcount==0:
+        error.grid(row=0,column=7)
+    else:
+        for i in range(2):
+            if op[i]==None:
+                op[i]='null'
+            elif i==0:
+                op[i]=f"'{op[i]}'"
+                
+        error.grid_forget()
+        new_post=op[0] if new_post=='' else "'"+new_post+"'"
+        new_sal=op[1] if new_sal=='' else new_sal
+        cursor.execute(f"update staff set post={new_post},sal={new_sal} where eid='{eid}'")
+        mydb.commit()
+        cursor.execute("select eid,name,username,post,mobile,sal,gender,dob,ipass,date_employed from staff")
+        for i in tree.get_children():
+            tree.delete(i)
+        for i in cursor.fetchall():
+            tree.insert('',"end",values=(i))
+        mydb.close()
+#%%
+def billing():
+    #caller.destroy()
+    billpage=Tk()
+    billpage.title("Billing")
+    customer=Frame(billpage)
+    customer.grid(row=1,column=0,sticky=W)
+    Label(billpage,text="Customer details:\n").grid(row=0,column=0,sticky=W)
+    Label(customer,text="Name: ").grid(row=0,column=0,sticky=W)
+    Label(customer,text="Phone Number: ").grid(row=1,column=0,sticky=W)
+    Label(customer,text="Gender ").grid(row=2,column=0,sticky=NW)
+    Label(customer,text="  Date of Birth: ").grid(row=1,column=2,sticky=W)
+    name1,ph1,gender,dob1=StringVar(),StringVar(),StringVar(),StringVar()
+    Entry(customer, textvariable=name1,width=40).grid(row=0,column=1,sticky=W,columnspan=3)
+    Entry(customer, textvariable=ph1,width=20).grid(row=1,column=1,sticky=W)
+    Entry(customer, textvariable=dob1,width=20).grid(row=1,column=3,sticky=W)
+    gen=Frame(customer)
+    gen.grid(row=2,column=1,sticky=W,columnspan=2)  
+    Radiobutton(gen,text="Prefer not to specify",variable=gender,value="null").grid(row=0,column=0,columnspan=2,sticky=W)
+    Radiobutton(gen,text="Male",variable=gender,value="'M'").grid(row=1,column=0,sticky=W)
+    Radiobutton(gen,text="Female",variable=gender,value="'F'").grid(row=1,column=1,sticky=W)
+    Radiobutton(gen,text="Others",variable=gender,value="'O'").grid(row=1,column=2,sticky=W)
+    #Button(customer, text="Proceed",command=push).grid(row=4,column=0,sticky=W)
+    Label(billpage,text="Invoice:\n").grid(row=2,column=0,sticky=W)
+    Bill=Frame(billpage)
+    Bill.grid(row=3,column=0,sticky=W)
+    Label(Bill, text="Batch Code: ").grid(row=0,column=0,sticky=W)
+    Label(Bill, text="    Item Name: ").grid(row=0,column=2,sticky=W)
+    Label(Bill, text="Quantity:").grid(row=1,column=0,sticky=W)
+    batch,iname,qty=StringVar(),StringVar(),StringVar()
+    Entry(Bill,textvariable=batch).grid(row=0,column=1)
+    Entry(Bill,textvariable=iname,width=30).grid(row=0,column=3)
+    Entry(Bill,textvariable=qty,width=10).grid(row=1,column=1,sticky=W)
+    
+    billpage.mainloop()
+    
+def push(name,mob,gender):
+    mydb.connect()
+    name=name1.get()
+    phone=ph1.get()
+    gender=g1.get()
+    DOB=dob1.get()
+    print(gender)
+    qs="insert into customer values('{}','{}','{}','{}')".format(phone,name,gender,DOB)
+    cursor.execute(qs)
+    mydb.commit()
+    mydb.close()
+    
+billing()
 #%%        
 LoginPage()
