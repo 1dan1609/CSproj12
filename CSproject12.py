@@ -403,10 +403,10 @@ def billing():
     customer=Frame(billpage)
     customer.grid(row=1,column=0,sticky=W)
     Label(billpage,text="Customer details:\n").grid(row=0,column=0,sticky=W)
-    Label(customer,text="Name: ").grid(row=0,column=0,sticky=W)
-    Label(customer,text="Phone Number: ").grid(row=1,column=0,sticky=W)
-    Label(customer,text="Gender ").grid(row=2,column=0,sticky=NW)
-    Label(customer,text="  Date of Birth: ").grid(row=1,column=2,sticky=W)
+    Label(customer,text="\tName: ").grid(row=0,column=0,sticky=W)
+    Label(customer,text="\tPhone Number: ").grid(row=1,column=0,sticky=W)
+    Label(customer,text="\tGender ").grid(row=2,column=0,sticky=NW)
+    Label(customer,text="\t  Date of Birth: ").grid(row=1,column=2,sticky=W)
     name1,ph1,gender,dob1=StringVar(),StringVar(),StringVar(),StringVar()
     Entry(customer, textvariable=name1,width=40).grid(row=0,column=1,sticky=W,columnspan=3)
     Entry(customer, textvariable=ph1,width=20).grid(row=1,column=1,sticky=W)
@@ -417,19 +417,89 @@ def billing():
     Radiobutton(gen,text="Male",variable=gender,value="'M'").grid(row=1,column=0,sticky=W)
     Radiobutton(gen,text="Female",variable=gender,value="'F'").grid(row=1,column=1,sticky=W)
     Radiobutton(gen,text="Others",variable=gender,value="'O'").grid(row=1,column=2,sticky=W)
-    #Button(customer, text="Proceed",command=push).grid(row=4,column=0,sticky=W)
     Label(billpage,text="Invoice:\n").grid(row=2,column=0,sticky=W)
     Bill=Frame(billpage)
     Bill.grid(row=3,column=0,sticky=W)
-    Label(Bill, text="Batch Code: ").grid(row=0,column=0,sticky=W)
-    Label(Bill, text="    Item Name: ").grid(row=0,column=2,sticky=W)
-    Label(Bill, text="Quantity:").grid(row=1,column=0,sticky=W)
+    Label(Bill, text="\tBatch Code:    ").grid(row=0,column=0,sticky=E)
+    Label(Bill, text="Item Name:    ").grid(row=0,column=2,sticky=E)
+    Label(Bill, text="Quantity:    ").grid(row=0,column=4,sticky=E)
     batch,iname,qty=StringVar(),StringVar(),StringVar()
-    Entry(Bill,textvariable=batch).grid(row=0,column=1)
-    Entry(Bill,textvariable=iname,width=30).grid(row=0,column=3)
-    Entry(Bill,textvariable=qty,width=10).grid(row=1,column=1,sticky=W)
-    
+    e1=Entry(Bill,textvariable=batch)
+    e1.grid(row=0,column=1,sticky=W)
+    e2=Entry(Bill,textvariable=iname,width=30)
+    e2.grid(row=0,column=3,sticky=W)
+    e3=Entry(Bill,textvariable=qty,width=10)
+    e3.grid(row=0,column=5,sticky=W)
+    record=[]
+    TotalValue=[0]
+    TotalFrame=Frame(Bill)
+    TotalFrame.grid(row=3,column=5)
+    error1=Label(Bill,text="Please fill the 3 fields.")
+    error2=Label(Bill,text="Such item does not exist.")
+    error3=Label(Bill,text="Entered quantity exceeds existing quantity.")
+    Button(Bill,text="ADD ENTRY",command=lambda: add_entry(Bill,tree,record,
+                                                           TotalValue,TotalFrame,
+                                                           batch.get(),
+                                                           iname.get(),
+                                                           qty.get(),
+                                                           error1,error2,error3)).grid(row=1,sticky=E,ipadx=4)
+    tree=Treeview(Bill)
+    tree["columns"]=(0,1,2,3,4,5,6,7)
+    tree.column("#0",width=0)
+    tree.column(0,width=100)
+    tree.column(1,width=100)
+    tree.column(2,width=100)
+    tree.column(3,width=120)
+    tree.column(4,width=50)
+    tree.column(5,width=50)
+    tree.column(6,width=80)
+    tree.column(7,width=60)
+    tree.heading(0,text="SERIEL NO.")
+    tree.heading(1,text="MANUFACTURER")
+    tree.heading(2,text="PRODUCT NAME")
+    tree.heading(3,text="BATCH CODE")
+    tree.heading(4,text="QTY")
+    tree.heading(5,text="RATE")
+    tree.heading(6,text="EXPIRY")
+    tree.heading(7,text="PRICE")
+    tree.grid(row=2,column=0,columnspan=6,sticky=W)
+    vsb=Scrollbar(Bill,orient="vertical",command=tree.yview)
+    tree.configure(yscrollcommand=vsb.set)
+    vsb.grid(row=2,column=6,sticky=NS)
+    Label(Bill,text="TOTAL:").grid(row=3,column=4,sticky=E)
     billpage.mainloop()
+    
+def add_entry(Bill,tree,record,TotalValue,TotalFrame,batch,iname,qty,error1,error2,error3):
+    if batch=='' or iname=='' or qty=='':
+        error1.grid(row=3,column=0,columnspan=2,sticky=W)
+    else:
+        error1.grid_forget()
+        mydb.connect()
+        cursor.execute(f"select serielno,manufacturer,qty,rate,expiry from stock where itemname='{iname}' and batchcode='{batch}'")
+        result=cursor.fetchall()
+        if cursor.rowcount==0:
+            error2.grid(row=3,column=0,columnspan=2,sticky=W)
+        else:
+            error2.grid_forget()
+            result=result[0]
+            if int(qty)>result[2]:
+                error3.grid(row=3,column=0,columnspan=3,sticky=W)
+            else:
+                error3.grid_forget()
+                record.append((result[0],
+                               result[1],
+                               iname,
+                               batch,
+                               qty,
+                               result[3],
+                               result[4],
+                               int(qty)*result[3]))
+                tree.insert('',"end",values=(record[-1]))
+                TotalValue[0]+=record[-1][-1]
+                for i in TotalFrame.winfo_children():
+                    i.destroy()
+                Label(TotalFrame,text=str(TotalValue[0])).grid(row=0,column=0,sticky=E)
+                
     
 def push(name,mob,gender):
     mydb.connect()
