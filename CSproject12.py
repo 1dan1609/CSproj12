@@ -104,23 +104,22 @@ def click_createacc(eid,name,ipass,uname,passwd,repass,mobno,dob,gender,caller):
     mydb.connect()
     cursor.execute(f"select ipass,name from staff where eid='{eid}'")
     check = cursor.fetchall()
-    print(check) #remove later
     error=Frame(caller)
-    error.grid(row=11,column=1,ipadx=83,sticky=W)
+    error.grid(row=12,column=1,ipadx=83,sticky=W)
     if cursor.rowcount == 0:
-        Label(error, text="Please contact your employer for a valid ID.", fg="red").pack(fill='x',side=LEFT)
+        Label(error, text="Please contact your employer for a valid ID.").pack(fill='x',side=LEFT)
     elif not check[0][1]==None:
-        Label(error, text="You have already made an account.", fg="red").pack(fill='x',side=LEFT)
+        Label(error, text="You have already made an account.").pack(fill='x',side=LEFT)
     elif not ipass==check[0][0]:
-        Label(error, text="Please contact your employer for a valid initial passcode.", fg="red").pack(fill='x',side=LEFT)
+        Label(error, text="Please contact your employer for a valid initial passcode.").pack(fill='x',side=LEFT)
     elif name=='':
-        Label(error, text="Please enter your name.",fg="red").pack(fill='x',side=LEFT)
+        Label(error, text="Please enter your name.").pack(fill='x',side=LEFT)
     elif len(uname)<8:
-        Label(error, text="Username must be at least 8 chars long.",fg="red").pack(fill='x',side=LEFT)
+        Label(error, text="Username must be at least 8 chars long.").pack(fill='x',side=LEFT)
     elif len(passwd)<8:
-        Label(error, text="Password must be at least 8 chars long.", fg="red").pack(fill='x',side=LEFT)
+        Label(error, text="Password must be at least 8 chars long.").pack(fill='x',side=LEFT)
     elif not repass==passwd:
-        Label(error, text="Passwords do not match.", fg="red").pack(fill='x',side=LEFT)
+        Label(error, text="Passwords do not match.").pack(fill='x',side=LEFT)
     else:
         dob="'"+dob+"'" if not dob=='' else 'null'
         mobno='null' if mobno=='' else "'"+mobno+"'"
@@ -140,6 +139,7 @@ def click_createacc(eid,name,ipass,uname,passwd,repass,mobno,dob,gender,caller):
 def stock(caller,post):
     caller.destroy()
     inventory=Tk()
+    inventory.title("Stock")
     topbuttons=Frame(inventory)
     topbuttons.grid(row=0,sticky=W)
     Button(topbuttons,text="LOGOUT",command=lambda: LoginPage(inventory)).grid(row=0,column=1)
@@ -147,7 +147,7 @@ def stock(caller,post):
     additems=Frame(inventory)
     additems.grid(row=2,column=0,columnspan=3,sticky=W)
     Label(inventory,text="Add to stock:-\n").grid(row=1,column=0,sticky=W)
-    Label(additems,text="Seriel no.*:").grid(row=0,column=0,sticky=W)
+    Label(additems,text="seriel no.*:").grid(row=0,column=0,sticky=W)
     Label(additems,text="Batch code*:").grid(row=0,column=2,sticky=W)
     Label(additems,text="Manufacturer:").grid(row=1,column=0,sticky=W)
     Label(additems,text=" Supplier:").grid(row=1,column=2,sticky=W)
@@ -195,7 +195,7 @@ def stock(caller,post):
     tree.column(5,width=50)
     tree.column(6,width=100)
     tree.column(7,width=130)
-    tree.heading(0,text="Seriel number")
+    tree.heading(0,text="seriel number")
     tree.heading(1,text="Supplier")
     tree.heading(2,text="Manufacturer")
     tree.heading(3,text="Product")
@@ -203,10 +203,10 @@ def stock(caller,post):
     tree.heading(5,text="Rate")
     tree.heading(6,text="Expiry")
     tree.heading(7,text="batchcode")
-    tree.grid(row=4,column=0)
+    tree.grid(row=5,column=0)
     vsb=Scrollbar(inventory,orient="vertical",command=tree.yview)
     tree.configure(yscrollcommand=vsb.set)
-    vsb.grid(row=4,column=1,sticky=NS)
+    vsb.grid(row=5,column=1,sticky=NS)
     mydb.connect()
     cursor.execute("select * from stock order by Itemname asc, expiry desc")
     for i in cursor.fetchall():
@@ -216,15 +216,15 @@ def stock(caller,post):
     
 def click_entry(mode,caller,entries,tree,serielno,manufacturer,supplier,itemname,qty,rate,expiry,batchcode):
     error=Frame(caller)
-    error.grid(row=3,column=1,sticky=W,ipadx=60)
+    error.grid(row=6,column=0,sticky=W,ipadx=60)
     if serielno=='':
-        Label(error,text="Seriel number is necessary.",fg='red').grid(row=0,column=0,sticky=W)
+        Label(error,text="seriel number is necessary.").grid(row=0,column=0,sticky=W)
     elif itemname=='':
-        Label(error,text="Product name is necessary.",fg='red').grid(row=0,column=0,sticky=W)
+        Label(error,text="Product name is necessary.").grid(row=0,column=0,sticky=W)
     elif rate=='':
-        Label(error,text="Rate is necessary",fg='red').grid(row=0,column=0,sticky=W)
+        Label(error,text="Rate is necessary").grid(row=0,column=0,sticky=W)
     elif batchcode=='':
-        Label(error,text="Batch code is necessary",fg='red').grid(row=0,column=0,sticky=W)
+        Label(error,text="Batch code is necessary").grid(row=0,column=0,sticky=W)
     else: 
         manufacturer='null' if manufacturer=='' else "'"+manufacturer+"'"
         supplier='null' if supplier=='' else "'"+supplier+"'"
@@ -246,6 +246,7 @@ def click_entry(mode,caller,entries,tree,serielno,manufacturer,supplier,itemname
 def employee(caller,post):
     caller.destroy()
     emp=Tk()
+    emp.title("Employee Management")
     topbuttons=Frame(emp)
     topbuttons.grid(row=0,sticky=W)
     Button(topbuttons,text="LOGOUT",command=lambda: LoginPage(emp)).grid(row=0,column=1)
@@ -405,12 +406,22 @@ def billing(caller,post):
     Button(topbuttons,text="LOGOUT",command=lambda: LoginPage(billpage)).grid(row=0,column=1)
     Button(topbuttons,text="BACK",command=lambda: MainMenu(billpage,post)).grid(row=0,column=0)
     customer=Frame(billpage)
-    customer.grid(row=2,column=0,sticky=W)
-    Label(billpage,text="Customer details:\n").grid(row=1,column=0,sticky=W)
+    customer.grid(row=3,column=0,sticky=W)
+    Label(billpage,text="Customer details:\n").grid(row=2,column=0,sticky=W)
     Label(customer,text="\tName: ").grid(row=0,column=0,sticky=W)
     Label(customer,text="\tPhone Number: ").grid(row=1,column=0,sticky=W)
     Label(customer,text="\tGender ").grid(row=2,column=0,sticky=NW)
     Label(customer,text="\t  Date of Birth: ").grid(row=1,column=2,sticky=W)
+    mydb.connect()
+    cursor.execute("select max(billno) from history")
+    op=cursor.fetchall()
+    if op[0][0]==None:
+        billno="B0001"
+    else:
+        billno="B"+str(int(op[0][0][1:])+1)
+        while len(billno)<5:
+            billno=billno[0]+'0'+billno[1:]
+    Label(billpage,text=f"Bill number: {billno}",font="Helvetica 10 bold").grid(row=1,column=0,sticky=W)
     name1,ph1,gender,dob1=StringVar(),StringVar(),StringVar(),StringVar()
     e1=Entry(customer, textvariable=name1,width=40)
     e1.grid(row=0,column=1,sticky=W,columnspan=3)
@@ -424,9 +435,9 @@ def billing(caller,post):
     Radiobutton(gen,text="Male",variable=gender,value="'M'").grid(row=1,column=0,sticky=W)
     Radiobutton(gen,text="Female",variable=gender,value="'F'").grid(row=1,column=1,sticky=W)
     Radiobutton(gen,text="Others",variable=gender,value="'O'").grid(row=1,column=2,sticky=W)
-    Label(billpage,text="Invoice:\n").grid(row=3,column=0,sticky=W)
+    Label(billpage,text="Invoice:\n").grid(row=4,column=0,sticky=W)
     Bill=Frame(billpage)
-    Bill.grid(row=4,column=0,sticky=W)
+    Bill.grid(row=5,column=0,sticky=W)
     Label(Bill, text="\tBatch Code:    ").grid(row=0,column=0,sticky=E)
     Label(Bill, text="Item Name:    ").grid(row=0,column=2,sticky=E)
     Label(Bill, text="Quantity:    ").grid(row=0,column=4,sticky=E)
@@ -454,13 +465,14 @@ def billing(caller,post):
                                                            iname.get(),
                                                            qty.get(),
                                                            error1,error2,error3)).grid(row=1,sticky=E,ipadx=4)
-    Button(Bill,text="MAKE BILL",command=lambda: click_makebill(name1.get(),
+    Button(Bill,text="MAKE BILL",command=lambda: click_makebill(billno,
+                                                         name1.get(),
                                                          ph1.get(),
                                                          dob1.get(),
                                                          gender.get(),
                                                          record,entries,
                                                          cust_error1,cust_error2,
-                                                         error4,tree,TotalFrame)).grid(row=1,column=1,sticky=W)
+                                                         error4,tree,TotalFrame,billpage,post)).grid(row=1,column=1,sticky=W)
     tree=Treeview(Bill)
     tree["columns"]=(0,1,2,3,4,5,6,7)
     tree.column("#0",width=0)
@@ -472,7 +484,7 @@ def billing(caller,post):
     tree.column(5,width=50)
     tree.column(6,width=76)
     tree.column(7,width=64)
-    tree.heading(0,text="SERIEL NO.")
+    tree.heading(0,text="seriel NO.")
     tree.heading(1,text="MANUFACTURER")
     tree.heading(2,text="PRODUCT NAME")
     tree.heading(3,text="BATCH CODE")
@@ -521,7 +533,7 @@ def add_entry(Bill,tree,record,entries,TotalValue,TotalFrame,batch,iname,qty,err
                 Label(TotalFrame,text=str(TotalValue[0]),font='Helvetica 10 bold').grid(row=0,column=0,sticky=E)
         
     
-def click_makebill(name,mob,dob,gender,record,entries,error1,error2,error3,tree,TotalFrame):
+def click_makebill(billno,name,mob,dob,gender,record,entries,error1,error2,error3,tree,TotalFrame,billpage,post):
     if mob=='':
         error1.grid(row=3,column=0,columnspan=3,sticky=W)
     else:
@@ -537,33 +549,24 @@ def click_makebill(name,mob,dob,gender,record,entries,error1,error2,error3,tree,
                 error2.grid_forget()
                 dob="null" if dob=='' else "'"+dob+"'"
                 query=f"insert into customers values('{mob}','{name}',{gender},{dob})"
-                print(query)
                 cursor.execute(query)
                 mydb.commit()
-                addbill(mob,record,entries,error3,tree,TotalFrame)
+                addbill(billno,mob,record,entries,error3,tree,TotalFrame,billpage,post)
         else:
-            addbill(mob,record,entries,error3,tree,TotalFrame)
+            addbill(billno,mob,record,entries,error3,tree,TotalFrame,billpage,post)
         
-def addbill(mob,record,entries,error,tree,TotalFrame):
+def addbill(billno,mob,record,entries,error,tree,TotalFrame,billpage,post):
         if record==[]:
             error.grid(row=3,column=0,columnspan=3,sticky=W)
         else:
             error.grid_forget()
             today=str(datetime.date.today())
-            cursor.execute("select max(billno) from history")
-            op=cursor.fetchall()
-            if op[0][0]==None:
-                billno="B0001"
-            else:
-                billno="B"+str(int(op[0][0][1:])+1)
-                while len(billno)<5:
-                    billno=billno[0]+'0'+billno[1:]
             for i in record:
                 cursor.execute(f"insert into history values('{billno}','{i[0]}',\
                                                             '{i[1]}','{i[2]}',\
                                                             '{i[3]}',{i[4]},\
                                                             {i[5]},'{i[6]}',\
-                                                            '{mob}','{today}')")
+                                                            '{mob}',curdate())")
                 cursor.execute(f"update stock set qty=qty-{i[4]} where batchcode='{i[3]}' and Itemname='{i[2]}'")
                 cursor.execute("delete from stock where qty=0")
             mydb.commit()
@@ -573,7 +576,8 @@ def addbill(mob,record,entries,error,tree,TotalFrame):
             for i in entries:
                 i.delete(0,100)
             for i in TotalFrame.winfo_children():
-                    i.destroy()
+                i.destroy()
+            billing(billpage,post)
 
 def history(caller,post):
     caller.destroy()
@@ -601,7 +605,7 @@ def history(caller,post):
     tree.column(5,width=50)
     tree.column(6,width=76)
     tree.column(7,width=64)
-    tree.heading(0,text="SERIEL NO.")
+    tree.heading(0,text="seriel NO.")
     tree.heading(1,text="MANUFACTURER")
     tree.heading(2,text="PRODUCT NAME")
     tree.heading(3,text="BATCH CODE")
@@ -635,6 +639,7 @@ def click_search(tree,custframe,billno,e1):
             tree.delete(i)            
         for i in result:
             entry=i[1:8]+tuple([i[-1]])
+            print(entry)
             tree.insert('',"end",values=(entry))
             total+=i[-1]
         name=result[0][11]
